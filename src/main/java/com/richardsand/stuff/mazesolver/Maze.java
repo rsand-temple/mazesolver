@@ -131,7 +131,7 @@ public class Maze {
         walls = new boolean[x][y];
         current = new Coordinate(sizeX, sizeY);
         current.setPosition(startx, starty);
-        start = new Coordinate(startx, starty);
+        start = new Coordinate(startx, starty, sizeX, sizeY);
     }
 
     public boolean isWall(int x, int y) {
