@@ -5,13 +5,13 @@ import java.io.InputStream;
 import java.util.LinkedList;
 
 import com.richardsand.stuff.mazesolver.Maze.Coordinate;
+import com.richardsand.stuff.mazesolver.Maze.WallState;
 
+import lombok.Data;
 import lombok.Getter;
-import lombok.ToString;
 
 public class MazeSolver {
-    @Getter
-    @ToString
+    @Data
     static class PositionEval {
         Coordinate     position;
         Maze.WallState east = Maze.WallState.UNKNOWN, west = Maze.WallState.UNKNOWN, north = Maze.WallState.UNKNOWN, south = Maze.WallState.UNKNOWN;
@@ -38,7 +38,7 @@ public class MazeSolver {
     }
 
     public boolean solve(Coordinate coord, PositionEval eval) {
-        System.out.println("Evaluating coordinates " + coord);
+        // System.out.println("Evaluating coordinates " + coord);
         // First evaluate win conditions
         if (!coord.equals(maze.getStart())) {
             if ((coord.getX() == 0) && (eval.getWest() == Maze.WallState.OPEN)) {
@@ -64,10 +64,11 @@ public class MazeSolver {
             eval = new PositionEval(coord.clone(), maze);
         }
         
-        System.out.println("   " + eval);
+        System.out.println(eval);
+        solution.push(eval);
 
         if (eval.getWest() == Maze.WallState.OPEN) {
-            System.out.println("Going WEST " + coord);
+            System.out.println("    Going WEST " + coord);
             coord.west();
             PositionEval next = new PositionEval(coord.clone(), maze);
             next.east = Maze.WallState.PATH;
@@ -78,7 +79,7 @@ public class MazeSolver {
         }
 
         if (eval.getNorth() == Maze.WallState.OPEN) {
-            System.out.println("Going NORTH " + coord);
+            System.out.println("    Going NORTH " + coord);
             coord.north();
             PositionEval next = new PositionEval(coord.clone(), maze);
             next.south = Maze.WallState.PATH;
@@ -89,7 +90,7 @@ public class MazeSolver {
         }
 
         if (eval.getEast() == Maze.WallState.OPEN) {
-            System.out.println("Going EAST " + coord);
+            System.out.println("    Going EAST " + coord);
             coord.east();
             PositionEval next = new PositionEval(coord.clone(), maze);
             next.west = Maze.WallState.PATH;
@@ -100,7 +101,7 @@ public class MazeSolver {
         }
 
         if (eval.getSouth() == Maze.WallState.OPEN) {
-            System.out.println("Going SOUTH " + coord);
+            System.out.println("    Going SOUTH " + coord);
             coord.south();
             PositionEval next = new PositionEval(coord.clone(), maze);
             next.north = Maze.WallState.PATH;
@@ -109,10 +110,25 @@ public class MazeSolver {
             next.west = maze.getWallState(next.getPosition().getX() - 1, next.getPosition().getY());
             return solve(coord, next);
         }
-
+        
         // We're blocked, go back
         System.out.println("Dead end, going back " + coord);
-        return false;
+        solution.pop();
+        PositionEval previous = solution.pop();
+        
+        // Cordon off the last path in reverse order
+        if (eval.getSouth() == WallState.PATH)
+            previous.setNorth(WallState.DEADEND);
+        else if (eval.getEast() == WallState.PATH)
+            previous.setWest(WallState.DEADEND);
+        else if (eval.getNorth() == WallState.PATH)
+            previous.setSouth(WallState.DEADEND);
+        else if (previous.getWest() == WallState.PATH)
+            previous.setEast(WallState.DEADEND);
+        else
+            return false;
+        
+        return solve(previous.getPosition(), previous);
     }
 
     public static void main(String[] args) throws IOException {
@@ -125,7 +141,7 @@ public class MazeSolver {
         MazeSolver solver = new MazeSolver(maze);
         if (solver.solve(maze.getStart(), null)) {
             System.out.print("Solved!!");
-            System.out.println(solver.getSolution());
         }
+        System.out.println("Solution: " + solver.getSolution());
     }
 }
