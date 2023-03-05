@@ -35,6 +35,7 @@ public class MazeReader {
                     starty = q;
                 }
             }
+            lines.add(mazeline);
             if (nextline.length() > maxx)
                 maxx = nextline.length();
             linectr++;
@@ -46,6 +47,7 @@ public class MazeReader {
         for (boolean[] line : lines) {
             for (int j = 0; j < line.length; j++)
                 maze.setWall(linectr, j, line[j]);
+            linectr++;
         }
 
         return maze;

@@ -68,15 +68,15 @@ public class Maze {
             return x--;
         }
 
-        public int north() {
+        public int south() {
             if (maxY != 0 && y >= maxY)
-                throw new MovementException("Cannot go further north");
+                throw new MovementException("Cannot go further south");
             return y++;
         }
 
-        public int south() {
+        public int north() {
             if (minY != 0 && y <= minY)
-                throw new MovementException("Cannot go further south");
+                throw new MovementException("Cannot go further north");
             return y--;
         }
 
@@ -151,7 +151,7 @@ public class Maze {
     }
 
     public void setWall(int x, int y, boolean value) {
-        walls[x][y] = value;
+        walls[y][x] = value;
     }
 
     public static void main(String args[]) throws IOException {
