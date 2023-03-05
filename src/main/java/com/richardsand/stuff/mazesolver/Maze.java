@@ -115,11 +115,11 @@ public class Maze {
     }
 
     @Getter
-    int         sizeX, sizeY;
+    int sizeX, sizeY;
     @Getter
     @Setter
-    Coordinate  current, start;
-    boolean[][] walls;
+    private Coordinate current, start;
+    private boolean[][] walls;
 
     public Maze(int x, int y) {
         this(x, y, 0, 0);
@@ -137,9 +137,13 @@ public class Maze {
     public boolean isWall(int x, int y) {
         return walls[x][y];
     }
-    
+
     public WallState getWallState(int x, int y) {
-        
+        try {
+            return (isWall(x, y)) ? WallState.WALL : WallState.OPEN;
+        } catch (IndexOutOfBoundsException oobe) {
+            return WallState.OOB;
+        }
     }
 
     public void addWall(int x, int y) {
@@ -151,8 +155,8 @@ public class Maze {
     }
 
     public static void main(String args[]) throws IOException {
-        InputStream is   = Maze.class.getResourceAsStream("/sample.maze");
-        Maze        maze = MazeReader.readMaze(is);
+        InputStream is = Maze.class.getResourceAsStream("/sample.maze");
+        Maze maze = MazeReader.readMaze(is);
 
         System.out.println("Maze dimension: " + maze.getSizeX() + "x" + maze.getSizeY());
         System.out.println("Current position: " + maze.getCurrent());
