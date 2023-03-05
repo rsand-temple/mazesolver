@@ -16,7 +16,7 @@ public class MazeReader {
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
         String nextline;
-        int maxx = 0, startx = 0, starty = 0;
+        int    maxx = 0, startx = 0, starty = 0;
 
         List<boolean[]> lines = new ArrayList<>();
 
@@ -39,11 +39,15 @@ public class MazeReader {
                 maxx = nextline.length();
             linectr++;
         }
-        
+
         Maze maze = new Maze(maxx, linectr, startx, starty);
-        
-        
-        
+
+        linectr = 0;
+        for (boolean[] line : lines) {
+            for (int j = 0; j < line.length; j++)
+                maze.setWall(linectr, j, line[j]);
+        }
+
         return maze;
     }
 }
