@@ -3,10 +3,10 @@ package com.richardsand.stuff.mazesolver;
 import java.io.IOException;
 import java.io.InputStream;
 
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 /**
  * Represents a maze
@@ -14,9 +14,33 @@ import lombok.ToString;
  * @author rsand
  */
 public class Maze {
-    public static enum Directions {
-        NORTH, SOUTH, EAST, WEST
-    };
+    public static enum WallState {
+        WALL, OPEN, UNKNOWN, DEADEND, LOOP, PATH, OOB
+    }
+
+    @Data
+    public static class PositionState {
+        public static PositionState createWall(Coordinate position) {
+            PositionState wall = new PositionState(position);
+            wall.self = Maze.WallState.WALL;
+            return wall;
+        }
+
+        Coordinate     position;
+        Maze.WallState self = Maze.WallState.OPEN;
+        Maze.WallState east = Maze.WallState.UNKNOWN, west = Maze.WallState.UNKNOWN, north = Maze.WallState.UNKNOWN, south = Maze.WallState.UNKNOWN;
+
+        public PositionState(Coordinate position) {
+            this.position = position;
+        }
+
+        public void fillState(Maze maze) {
+            this.east = maze.getWallState(position.getX() + 1, position.getY());
+            this.west = maze.getWallState(position.getX() - 1, position.getY());
+            this.north = maze.getWallState(position.getX(), position.getY() - 1);
+            this.south = maze.getWallState(position.getX(), position.getY() + 1);
+        }
+    }
 
     /**
      * Runtime exception class for moving out of bounds
@@ -37,16 +61,11 @@ public class Maze {
      * @author rsand
      */
     @Getter
-    @ToString
     @EqualsAndHashCode
     public static class Coordinate implements Cloneable {
         private int x = 0;
         private int y = 0;
         private int minX, minY, maxX, maxY;
-
-        public Coordinate(int maxx, int maxy) {
-            this(0, 0, maxx, maxy);
-        }
 
         public Coordinate(int minx, int miny, int maxx, int maxy) {
             this.minX = minx;
@@ -108,18 +127,19 @@ public class Maze {
             nc.y = this.y;
             return nc;
         }
-    }
 
-    public static enum WallState {
-        WALL, OPEN, UNKNOWN, DEADEND, LOOP, PATH, OOB
+        @Override
+        public String toString() {
+            return "(" + x + "," + y + ")";
+        }
     }
 
     @Getter
-    int sizeX, sizeY;
+    int                       sizeX, sizeY;
     @Getter
     @Setter
-    private Coordinate current, start;
-    private boolean[][] walls;
+    private Coordinate        current, start;
+    private PositionState[][] walls;
 
     public Maze(int x, int y) {
         this(x, y, 0, 0);
@@ -128,35 +148,50 @@ public class Maze {
     public Maze(int x, int y, int startx, int starty) {
         this.sizeX = x;
         this.sizeY = y;
-        walls = new boolean[x][y];
-        current = new Coordinate(sizeX, sizeY);
+        walls = new PositionState[x][y];
+        current = new Coordinate(0, 0, sizeX, sizeY);
         current.setPosition(startx, starty);
         start = new Coordinate(startx, starty, sizeX, sizeY);
     }
 
     public boolean isWall(int x, int y) {
-        return walls[x][y];
+        return (walls[x][y].self == Maze.WallState.WALL);
     }
 
     public WallState getWallState(int x, int y) {
         try {
-            return (isWall(x, y)) ? WallState.WALL : WallState.OPEN;
+            return walls[x][y].self;
         } catch (IndexOutOfBoundsException oobe) {
             return WallState.OOB;
         }
     }
 
-    public void addWall(int x, int y) {
-        setWall(x, y, true);
+    public PositionState getPositionState(int x, int y) {
+        return walls[x][y];
     }
 
-    public void setWall(int x, int y, boolean value) {
-        walls[y][x] = value;
+    public PositionState getPositionState(Coordinate coord) {
+        return walls[coord.getX()][coord.getY()];
+    }
+
+    public void addWall(int x, int y) {
+        walls[x][y] = PositionState.createWall(newCoordinate(x, y));
+    }
+    
+    public void addOpen(int x, int y) {
+        walls[x][y] = new PositionState(newCoordinate(x, y));
+    }
+    
+    public Coordinate newCoordinate(int x, int y) {
+        Coordinate c = new Coordinate(0, 0, this.sizeX, this.sizeY);
+        c.setX(x);
+        c.setY(y);
+        return c;
     }
 
     public static void main(String args[]) throws IOException {
-        InputStream is = Maze.class.getResourceAsStream("/sample.maze");
-        Maze maze = MazeReader.readMaze(is);
+        InputStream is   = Maze.class.getResourceAsStream("/sample.maze");
+        Maze        maze = MazeReader.readMaze(is);
 
         System.out.println("Maze dimension: " + maze.getSizeX() + "x" + maze.getSizeY());
         System.out.println("Current position: " + maze.getCurrent());

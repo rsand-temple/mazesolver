@@ -45,10 +45,21 @@ public class MazeReader {
 
         linectr = 0;
         for (boolean[] line : lines) {
-            for (int j = 0; j < line.length; j++)
-                maze.setWall(linectr, j, line[j]);
+            for (int j = 0; j < line.length; j++) {
+                if (line[j]) {
+                    System.out.println("Adding wall at " + j + "," + linectr);
+                    maze.addWall(j, linectr);
+                }
+                else
+                    maze.addOpen(j, linectr);
+            }
             linectr++;
         }
+        
+        // Fill out all of the starting position states
+        for (int x = 0; x < maze.getSizeX(); x++)
+            for (int y = 0; y < maze.getSizeY(); y++)
+                maze.getPositionState(x, y).fillState(maze);
 
         return maze;
     }
