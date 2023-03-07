@@ -2,6 +2,7 @@ package com.richardsand.stuff.mazesolver;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.LinkedList;
 
 import com.richardsand.stuff.mazesolver.Maze.Coordinate;
@@ -22,8 +23,10 @@ public class MazeSolver {
     }
 
     public boolean solve(Coordinate coord) {
+        // Retrieve the current state for the coordinate
         PositionState eval = maze.getPositionState(coord);
 
+        // First check for win conditions
         if (!coord.equals(maze.getStart())) {
             if ((coord.getX() == 0) && (eval.getWest() == Maze.WallState.OOB)) {
                 System.out.println("Exiting west!");
@@ -43,50 +46,56 @@ public class MazeSolver {
             }
         }
 
+        // Push the current coordinates onto the stack
         System.out.println(eval);
+        solution.push(coord.clone()); // we use a clone here because the variable coord keeps changing
+        
+        // This was added for troubleshooting to prevent stack overflow errors
         if (++tries > maze.getSizeX() * maze.getSizeY()) {
             System.out.println("We're clearly going in circles after " + tries + " tries, ending");
             return false;
         }
 
+        // Go WEST if we can
         if (eval.getWest() == Maze.WallState.OPEN) {
-            solution.push(coord.clone());
             coord.west();
-            System.out.println("    Going WEST to " + coord);
             maze.getPositionState(coord).east = Maze.WallState.PATH;
+            System.out.println("    Going WEST to " + coord);
             return solve(coord);
         }
 
+        // Go NORTH if we can
         if (eval.getNorth() == Maze.WallState.OPEN) {
-            solution.push(coord.clone());
             coord.north();
-            System.out.println("    Going NORTH to " + coord);
             maze.getPositionState(coord).south = Maze.WallState.PATH;
+            System.out.println("    Going NORTH to " + coord);
             return solve(coord);
         }
 
+        // Go EAST if we can
         if (eval.getEast() == Maze.WallState.OPEN) {
-            solution.push(coord.clone());
             coord.east();
-            System.out.println("    Going EAST to " + coord);
             maze.getPositionState(coord).west = Maze.WallState.PATH;
+            System.out.println("    Going EAST to " + coord);
             return solve(coord);
         }
 
+        // Go SOUTH if we can
         if (eval.getSouth() == Maze.WallState.OPEN) {
-            solution.push(coord.clone());
             coord.south();
-            System.out.println("    Going SOUTH to " + coord);
             maze.getPositionState(coord).north = Maze.WallState.PATH;
+            System.out.println("    Going SOUTH to " + coord);
             return solve(coord);
         }
 
-        // We're blocked, go back
+        // If we reach here, we are blocked, go back
+        // Another sanity check - if the solution is empty, something went wrong and we've gone in a circle
         if (solution.isEmpty()) {
             System.out.println("We're back to where we started, ending");
             return false;
         }
 
+        // Going back
         solution.pop();
         Coordinate previous = solution.pop();
         System.out.println("Dead end, going back to " + previous);
@@ -116,7 +125,8 @@ public class MazeSolver {
         MazeSolver solver = new MazeSolver(maze);
         if (solver.solve(maze.getStart())) {
             System.out.print("Solved!!");
-            System.out.println("Solution: " + solver);
+            Collections.reverse(solver.solution);
+            System.out.println("Solution: " + solver.solution);
         }
     }
 }
